@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inventory System ERD</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 40px 20px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 10px;
+      font-size: 32px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #7f8c8d;
+      margin-bottom: 40px;
+      font-size: 16px;
+    }
+
+    .legend {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      margin-bottom: 40px;
+      flex-wrap: wrap;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      color: #555;
+    }
+
+    .legend-box {
+      width: 30px;
+      height: 20px;
+      border-radius: 4px;
+    }
+
+    .erd-canvas {
+      position: relative;
+      min-height: 800px;
+      background: #f8f9fa;
+      border-radius: 12px;
+      padding: 40px;
+    }
+
+    .entity {
+      position: absolute;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      min-width: 280px;
+      overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .entity:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .entity-header {
+      padding: 15px 20px;
+      color: white;
+      font-weight: 600;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .entity-header .icon {
+      font-size: 24px;
+    }
+
+    .entity-body {
+      padding: 0;
+    }
+
+    .field {
+      padding: 10px 20px;
+      border-bottom: 1px solid #ecf0f1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+    }
+
+    .field:last-child {
+      border-bottom: none;
+    }
+
+    .field-name {
+      font-weight: 500;
+      color: #2c3e50;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .field-type {
+      color: #7f8c8d;
+      font-size: 12px;
+      font-family: 'Courier New', monospace;
+    }
+
+    .pk {
+      background: #ffd700;
+      color: #000;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .fk {
+      background: #3498db;
+      color: white;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .index {
+      background: #27ae60;
+      color: white;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .embedded {
+      background: #e74c3c;
+      color: white;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .managers { background: #9b59b6; }
+    .cashiers { background: #3498db; }
+    .products { background: #27ae60; }
+    .sales { background: #e74c3c; }
+
+    /* Positioning */
+    .entity-managers { top: 50px; left: 50px; }
+    .entity-cashiers { top: 50px; right: 50px; }
+    .entity-products { bottom: 50px; left: 50px; }
+    .entity-sales { top: 350px; left: 50%; transform: translateX(-50%); min-width: 400px; }
+
+    /* Relationship lines */
+    .relationship {
+      position: absolute;
+      pointer-events: none;
+    }
+
+    .rel-line {
+      stroke: #95a5a6;
+      stroke-width: 2;
+      fill: none;
+      marker-end: url(#arrowhead);
+    }
+
+    .rel-label {
+      position: absolute;
+      background: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #7f8c8d;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      white-space: nowrap;
+    }
+
+    .sharding-badge {
+      background: #f39c12;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      margin-top: 5px;
+      display: inline-block;
+    }
+
+    .entity-footer {
+      background: #f8f9fa;
+      padding: 10px 20px;
+      font-size: 11px;
+      color: #7f8c8d;
+      border-top: 1px solid #ecf0f1;
+    }
+
+    @media (max-width: 1200px) {
+      .entity-managers { top: 50px; left: 20px; }
+      .entity-cashiers { top: 250px; right: 20px; }
+      .entity-products { bottom: 50px; left: 20px; }
+      .entity-sales { top: 550px; left: 50%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📊 Inventory System - NoSQL ERD</h1>
+    <p class="subtitle">RethinkDB Distributed Database | 2 Shards | 2 Replicas</p>
+
+    <div class="legend">
+      <div class="legend-item">
+        <span class="legend-box pk"></span>
+        <span>Primary Key (PK)</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-box fk"></span>
+        <span>Foreign Key (FK)</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-box index"></span>
+        <span>Indexed Field</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-box embedded"></span>
+        <span>Embedded/Array</span>
+      </div>
+    </div>
+
+    <div class="erd-canvas">
+      <!-- SVG for relationship lines -->
+      <svg width="100%" height="100%" style="position: absolute; top: 0; left: 0; pointer-events: none;">
+        <defs>
+          <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+            <polygon points="0 0, 10 3, 0 6" fill="#95a5a6" />
+          </marker>
+        </defs>
+        
+        <!-- Managers to Sales -->
+        <path d="M 200 250 Q 400 300, 550 380" class="rel-line" stroke-dasharray="5,5"/>
+        
+        <!-- Cashiers to Sales -->
+        <path d="M 1050 250 Q 850 300, 750 380" class="rel-line"/>
+        
+        <!-- Products to Sales -->
+        <path d="M 200 650 Q 400 600, 550 580" class="rel-line"/>
+      </svg>
+
+      <!-- Relationship labels -->
+      <div class="rel-label" style="top: 280px; left: 350px;">1:N (optional)</div>
+      <div class="rel-label" style="top: 280px; left: 850px;">1:N (creates)</div>
+      <div class="rel-label" style="top: 600px; left: 350px;">M:N (embedded)</div>
+
+      <!-- MANAGERS Entity -->
+      <div class="entity entity-managers">
+        <div class="entity-header managers">
+          <span class="icon">👤</span>
+          <span>MANAGERS</span>
+        </div>
+        <div class="entity-body">
+          <div class="field">
+            <span class="field-name">
+              <span class="pk">PK</span>
+              id
+            </span>
+            <span class="field-type">UUID</span>
+          </div>
+          <div class="field">
+            <span class="field-name">
+              <span class="index">IDX</span>
+              username
+            </span>
+            <span class="field-type">string</span>
+          </div>
+          <div class="field">
+            <span class="field-name">password</span>
+            <span class="field-type">string</span>
+          </div>
+          <div class="field">
+            <span class="field-name">fullName</span>
+            <span class="field-type">string</span>
+          </div>
+          <div class="field">
+            <span class="field-name">email</span>
+            <span class="field-type">string</span>
+          </div>
+          <div class="field">
+            <span class="field-name">created_at</span>
+            <span class="field-type">timestamp</span>
+          </div>
+        </div>
+        <div class="entity-footer">
+          Access: Dashboard, Products, Sales, Reports
+        </div>
+      </div>
+
+      <!-- CASHIERS Entity -->
+      <div class="entity entity-cashiers">
+        <div class="entity-header cashiers">
+          <span class="icon">👥</span>
+          <span>CASHIERS</span>
+        </div>
+        <div class="entity-body">
+          <div class="field">
+            <span class="field-name">
+              <span class="pk">PK</span>
+              id
+            </span>
+            <span class="field-type">UUID</span>
+          </div>
+          <div class="field">
+            <span class="field-name">
+              <span class="index">IDX</span>
+              username
+            </span>
+            <span class="field-type">string</span>
+          </div>
+          <div class="field">
+            <span class="field-name">password</span>
+            <span class="field-type">string</span>
+          </div>
+          <div class="field">
+            <span class="field-name">fullName</span>
+            <span class="field-type">string</span>
+          </div>
+          <div class="field">
+            <span class="field-name">email</span>
+            <span class="field-type">string</span>
+          </div>
+          <div class="field">
+            <span class="field-name">created_at</span>
+            <span class="field-type">timestamp</span>
+          </div>
+        </div>
+        <div class="entity-footer">
+          Access: POS System, Own Sales History
+        </div>
+      </div>
+
+      <!-- PRODUCTS Entity -->
+      <div class="entity entity-products">
+        <div class="entity-header products">
+          <span class="icon">📦</span>
+          <span>PRODUCTS</span>
+        </div>
+        <div class="entity-body">
+          <div class="field">
+            <span class="field-name">
+              <span class="pk">PK</span>
+              id
+            </span>
+            <span class="field-type">UUID</span>
+          </div>
+          <div class="field">
+            <span class="field-name">
+              <span class="index">IDX</span>
+              name
+            </span>
+            <span class="field-type">string</span>
+          </div>
+          <div class="field">
+            <span class="field-name">
+              <span class="index">IDX</span>
+              category
+            </span>
+            <span class="field-type">string</span>
+          </div>
+          <div class="field">
+            <span class="field-name">price</span>
+            <span class="field-type">float</span>
+          </div>
+          <div class="field">
+            <span class="field-name">stock</span>
+            <span class="field-type">integer</span>
+          </div>
+          <div class="field">
+            <span class="field-name">barcode</span>
+            <span class="field-type">string</span>
+          </div>
+          <div class="field">
+            <span class="field-name">created_at</span>
+            <span class="field-type">timestamp</span>
+          </div>
+          <div class="field">
+            <span class="field-name">updated_at</span>
+            <span class="field-type">timestamp</span>
+          </div>
+        </div>
+        <div class="entity-footer">
+          <span class="sharding-badge">🔀 2 Shards | 2 Replicas</span>
+        </div>
+      </div>
+
+      <!-- SALES Entity (Main) -->
+      <div class="entity entity-sales">
+        <div class="entity-header sales">
+          <span class="icon">💰</span>
+          <span>SALES</span>
+        </div>
+        <div class="entity-body">
+          <div class="field">
+            <span class="field-name">
+              <span class="pk">PK</span>
+              id
+            </span>
+            <span class="field-type">UUID</span>
+          </div>
+          <div class="field">
+            <span class="field-name">
+              <span class="fk">FK</span>
+              <span class="index">IDX</span>
+              cashier_id
+            </span>
+            <span class="field-type">UUID</span>
+          </div>
+          <div class="field">
+            <span class="field-name">cashier_name</span>
+            <span class="field-type">string (denormalized)</span>
+          </div>
+          <div class="field">
+            <span class="field-name">customer_name</span>
+            <span class="field-type">string</span>
+          </div>
+          <div class="field" style="background: #fff3cd; border-left: 3px solid #e74c3c;">
+            <span class="field-name">
+              <span class="embedded">ARRAY</span>
+              items[]
+            </span>
+            <span class="field-type">object[]</span>
+          </div>
+          <div class="field" style="padding-left: 40px; font-size: 12px; background: #f8f9fa;">
+            <span class="field-name">
+              <span class="fk">FK</span>
+              product_id
+            </span>
+            <span class="field-type">UUID</span>
+          </div>
+          <div class="field" style="padding-left: 40px; font-size: 12px; background: #f8f9fa;">
+            <span class="field-name">name</span>
+            <span class="field-type">string (snapshot)</span>
+          </div>
+          <div class="field" style="padding-left: 40px; font-size: 12px; background: #f8f9fa;">
+            <span class="field-name">category</span>
+            <span class="field-type">string (snapshot)</span>
+          </div>
+          <div class="field" style="padding-left: 40px; font-size: 12px; background: #f8f9fa;">
+            <span class="field-name">price</span>
+            <span class="field-type">float (snapshot)</span>
+          </div>
+          <div class="field" style="padding-left: 40px; font-size: 12px; background: #f8f9fa;">
+            <span class="field-name">quantity</span>
+            <span class="field-type">integer</span>
+          </div>
+          <div class="field" style="padding-left: 40px; font-size: 12px; background: #f8f9fa;">
+            <span class="field-name">subtotal</span>
+            <span class="field-type">float</span>
+          </div>
+          <div class="field">
+            <span class="field-name">total</span>
+            <span class="field-type">float (calculated)</span>
+          </div>
+          <div class="field">
+            <span class="field-name">payment_method</span>
+            <span class="field-type">enum</span>
+          </div>
+          <div class="field">
+            <span class="field-name">
+              <span class="index">IDX</span>
+              created_at
+            </span>
+            <span class="field-type">timestamp</span>
+          </div>
+        </div>
+        <div class="entity-footer">
+          <span class="sharding-badge">🔀 2 Shards | 2 Replicas</span>
+          <div style="margin-top: 5px; font-size: 10px;">
+            Embedded items[] preserve product history
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Additional Info -->
+    <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+      <h3 style="margin-bottom: 15px; color: #2c3e50;">📝 NoSQL Design Notes</h3>
+      <ul style="list-style: none; padding: 0;">
+        <li style="padding: 8px 0; color: #555;">
+          <strong>✅ Denormalization:</strong> cashier_name stored in sales to avoid joins
+        </li>
+        <li style="padding: 8px 0; color: #555;">
+          <strong>✅ Embedded Arrays:</strong> items[] embedded in sales for single-query retrieval
+        </li>
+        <li style="padding: 8px 0; color: #555;">
+          <strong>✅ Product Snapshots:</strong> Price/name preserved in sales.items[] for historical accuracy
+        </li>
+        <li style="padding: 8px 0; color: #555;">
+          <strong>✅ Strategic Indexing:</strong> username, category, cashier_id, created_at indexed for fast queries
+        </li>
+        <li style="padding: 8px 0; color: #555;">
+          <strong>✅ High Availability:</strong> 2 replicas across PC_A and PC_B - system survives single server failure
+        </li>
+        <li style="padding: 8px 0; color: #555;">
+          <strong>✅ Distributed Load:</strong> Products and Sales sharded across 2 servers for performance
+        </li>
+      </ul>
+    </div>
+  </div>
+</body>
+</html>

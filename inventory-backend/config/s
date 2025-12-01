@@ -1,0 +1,123 @@
+import rethinkdbdash from 'rethinkdbdash';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const r = rethinkdbdash({
+  servers: [
+    { host: process.env.RETHINKDB_HOST_A || '192.168.1.30', port: parseInt(process.env.RETHINKDB_PORT) || 28015 },
+    { host: process.env.RETHINKDB_HOST_B || '192.168.1.30', port: parseInt(process.env.RETHINKDB_PORT) || 28015 }
+  ],
+  db: process.env.RETHINKDB_DB || 'ordering_system',
+  pool: true,
+  buffer: 10,
+  max: 100,
+  timeout: 20,
+  pingInterval: 60,
+  discovery: true,
+  silent: false
+});
+
+export const createDatabase = async () => {
+  try {
+    const dbList = await r.dbList().run();
+    
+    if (!dbList.includes('ordering_system')) {
+      await r.dbCreate('ordering_system').run();
+      console.log('Database created: ordering_system');
+    }
+
+    const tableList = await r.db('ordering_system').tableList().run();
+
+    // Create managers table
+    if (!tableList.includes('managers')) {
+      await r.db('ordering_system').tableCreate('managers').run();
+      await r.db('ordering_system').table('managers').indexCreate('username').run();
+      console.log('Table created: managers');
+    }
+
+    // Create cashiers table
+    if (!tableList.includes('cashiers')) {
+      await r.db('ordering_system').tableCreate('cashiers').run();
+      await r.db('ordering_system').table('cashiers').indexCreate('username').run();
+      console.log('Table created: cashiers');
+    }
+
+    // Create suppliers table
+    if (!tableList.includes('suppliers')) {
+      await r.db('ordering_system').tableCreate('suppliers').run();
+      await r.db('ordering_system').table('suppliers').indexCreate('supplier_name').run();
+      await r.db('ordering_system').table('suppliers').indexCreate('categories', { multi: true }).run();
+      console.log('Table created: suppliers');
+    }
+
+    // Create products table with sharding
+    if (!tableList.includes('products')) {
+      await r.db('ordering_system').tableCreate('products', {
+        shards: 2,
+        replicas: 2
+      }).run();
+      await r.db('ordering_system').table('products').indexCreate('category').run();
+      await r.db('ordering_system').table('products').indexCreate('name').run();
+      console.log('Table created: products (shards: 2, replicas: 2)');
+    }
+
+    // Create sales table with sharding
+    if (!tableList.includes('sales')) {
+      await r.db('ordering_system').tableCreate('sales', {
+        shards: 2,
+        replicas: 2
+      }).run();
+      await r.db('ordering_system').table('sales').indexCreate('cashier_id').run();
+      await r.db('ordering_system').table('sales').indexCreate('created_at').run();
+      console.log('Table created: sales (shards: 2, replicas: 2)');
+    }
+
+    // Create purchase_orders table
+    if (!tableList.includes('purchase_orders')) {
+      await r.db('ordering_system').tableCreate('purchase_orders').run();
+      await r.db('ordering_system').table('purchase_orders').indexCreate('supplier_id').run();
+      await r.db('ordering_system').table('purchase_orders').indexCreate('manager_id').run();
+      await r.db('ordering_system').table('purchase_orders').indexCreate('order_date').run();
+      await r.db('ordering_system').table('purchase_orders').indexCreate('status').run();
+      console.log('Table created: purchase_orders');
+    }
+
+    // Create inventory_logs table with sharding
+    if (!tableList.includes('inventory_logs')) {
+      await r.db('ordering_system').tableCreate('inventory_logs', {
+        shards: 2,
+        replicas: 2
+      }).run();
+      await r.db('ordering_system').table('inventory_logs').indexCreate('product_id').run();
+      await r.db('ordering_system').table('inventory_logs').indexCreate('created_at').run();
+      await r.db('ordering_system').table('inventory_logs').indexCreate('action_type').run();
+      console.log('Table created: inventory_logs (shards: 2, replicas: 2)');
+    }
+
+    // Create analytics table
+    if (!tableList.includes('analytics')) {
+      await r.db('ordering_system').tableCreate('analytics').run();
+      await r.db('ordering_system').table('analytics').indexCreate('metric_type').run();
+      await r.db('ordering_system').table('analytics').indexCreate('date').run();
+      console.log('Table created: analytics');
+    }
+
+    // Wait for indexes
+    await r.db('ordering_system').table('managers').indexWait().run();
+    await r.db('ordering_system').table('cashiers').indexWait().run();
+    await r.db('ordering_system').table('suppliers').indexWait().run();
+    await r.db('ordering_system').table('products').indexWait().run();
+    await r.db('ordering_system').table('sales').indexWait().run();
+    await r.db('ordering_system').table('purchase_orders').indexWait().run();
+    await r.db('ordering_system').table('inventory_logs').indexWait().run();
+    await r.db('ordering_system').table('analytics').indexWait().run();
+
+    console.log('Database initialization complete!');
+  } catch (error) {
+    console.error('Database initialization error:', error);
+    throw error;
+  }
+};
+
+export default r;
