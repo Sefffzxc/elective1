@@ -41,10 +41,10 @@ A real-time inventory management system with distributed database architecture u
 - [ ] Firewall configured to allow required ports
 
 **Network Information:**
-- PC_A IP: ________________
-- PC_B IP: ________________
-- Subnet Mask: ________________
-- Gateway: ________________
+- PC_A IP: 192.168.1.100
+- PC_B IP: 192.168.1.101
+- Subnet Mask: 255.255.255.0
+- Gateway: 192.168.1.1
 
 ---
 
