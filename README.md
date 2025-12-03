@@ -130,8 +130,10 @@ C:\inventory-system\inventory-backend\
 ├── middleware/
 │   └── auth.js
 ├── routes/
+│   ├── analytics.js
 │   ├── auth.js
 │   ├── products.js
+│   ├── realtime.js
 │   ├── sales.js
 │   ├── reports.js
 │   ├── suppliers.js
@@ -157,7 +159,9 @@ C:\inventory-system\inventory-frontend\
         ├── Login.jsx
         ├── manager/
         │   ├── Dashboard.jsx
+        │   ├── Analytics.jsx
         │   ├── Products.jsx
+        │   ├── PurchaseOrders.jsx
         │   ├── Sales.jsx
         │   └── Reports.jsx
         └── cashier/
